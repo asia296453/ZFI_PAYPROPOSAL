@@ -1,0 +1,65 @@
+<mvc:View controllerName="zfipayproposal.controller.Main"
+    xmlns:mvc="sap.ui.core.mvc" displayBlock="true"
+     xmlns="sap.m"
+	 xmlns:t="sap.ui.table"
+    xmlns:core="sap.ui.core"
+	 xmlns:fb="sap.ui.comp.filterbar"
+	 xmlns:customData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+    xmlns:custData="http://schemas.sap.com/sapui5/extension/sap.ui.core.CustomData/1"
+	xmlns:st="sap.ui.comp.smarttable">
+	<Page id="page" title="{i18n>title}" enableScrolling="true">
+	 <content>
+        <ScrollContainer vertical="true">
+   	<!-- <VBox fitContainer="true"> -->
+	<fb:FilterBar id="fbPreqs" search="onSearch" showRestoreButton="true" showClearButton="true" showClearOnFB="true"
+						clear="onClearFilterBar" class="sapUiSizeCompact">
+						<fb:filterGroupItems>
+
+<fb:FilterGroupItem name="Bukrs" label="Company Code" groupName="default" visibleInFilterBar="true">
+    <fb:control>
+        <Input value="{LocalModel>/Companycode}"  />
+</fb:control>
+</fb:FilterGroupItem>
+
+<fb:FilterGroupItem name="Supplier" label="Supplier" groupName="default" visibleInFilterBar="true">
+    <fb:control>
+        <MultiInput value="{LocalModel>/Supplier}"  showValueHelp="true" valueHelpRequest="onOpenSupplier" valueHelpOnly="true"/>
+</fb:control>
+</fb:FilterGroupItem>
+
+
+<fb:FilterGroupItem name="Ddate" label="Run Date" groupName="default" visibleInFilterBar="true">
+    <fb:control>
+    <DatePicker placeholder="Enter Date"
+                    value="{
+						'path':'LocalModel>/Ddate',
+						'type':'sap.ui.model.type.Date',
+						'formatOptions': {
+							'pattern': 'dd-MM-yyyy',
+                            'UTC': true
+						}
+					}"
+                />
+</fb:control>
+</fb:FilterGroupItem>
+
+<fb:FilterGroupItem name="RType" label="Type" groupName="default" visibleInFilterBar="true">
+    <fb:control>
+       <Select  forceSelection="false"
+						selectedKey="{LocalModel>/Type}"
+						items="{
+							path: 'typedtls>/results',
+                            templateShareable:false
+						}">
+					<core:Item key="{typedtls>value}" text="{typedtls>value}" />
+				</Select>
+</fb:control>
+</fb:FilterGroupItem>
+
+						</fb:filterGroupItems>
+					</fb:FilterBar>
+		
+	</ScrollContainer>
+    </content>
+    </Page>
+</mvc:View>

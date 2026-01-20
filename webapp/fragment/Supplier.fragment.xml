@@ -1,0 +1,16 @@
+<core:FragmentDefinition
+	xmlns="sap.m"
+	xmlns:core="sap.ui.core">
+	<SelectDialog multiSelect="false"
+		title="Supplier"
+		class="sapUiPopupWithPadding"
+		items="{/SupplierSet}"
+		search="SearchSupplier"
+		confirm="ConfSupplier"
+		cancel="handleValueHelpClose" growingThreshold="true" growing="true" >
+		<StandardListItem
+			title="{Lifnr}"
+		    description="{Name1}" 
+			/>
+	</SelectDialog>
+</core:FragmentDefinition>

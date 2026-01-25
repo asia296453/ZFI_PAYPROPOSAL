@@ -20,6 +20,7 @@ sap.ui.define([
             this.setModel(models.createDeviceModel(), "device");
             this.setModel(new sap.ui.model.json.JSONModel(), "LocalModel");
             this.setModel(new sap.ui.model.json.JSONModel(), "typedtls");
+             this.setModel(new sap.ui.model.json.JSONModel(), "test");
             // enable routing
             this.getRouter().initialize();
         }

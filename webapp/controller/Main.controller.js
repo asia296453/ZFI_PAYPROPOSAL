@@ -19,12 +19,14 @@ sap.ui.define([
             
             var otypedtls= [];
             var sval = {
-                "value":"Summary View"
+                "value":"Summary View",
+                "key":"S"
             };
             otypedtls.push(sval);
 
              var sval = {
-                "value":"Detailed View"
+                "value":"Detailed View",
+                "key":"D"
             };
             otypedtls.push(sval);
             this.getOwnerComponent().getModel("typedtls").setProperty("/results", otypedtls);
@@ -96,10 +98,19 @@ sap.ui.define([
         },
         ConfSupplier: function (evt) {
             debugger;
-            var oval = evt.getParameter("selectedItem").getProperty("title");
-            var sSelecteddesc = evt.getParameter("selectedItem").getProperty("description");
-            this.getView().getModel("LocalModel").setProperty("/Supplier", oval);
-            this.getView().getModel("LocalModel").refresh(true);
+            var aContexts = evt.getParameter("selectedContexts");
+            if (aContexts && aContexts.length) {
+                var oval = aContexts.map(function (oContext) {
+                    return oContext.getObject().Lifnr;
+                }).join(", ");
+                var stype = "/" + this.stype;
+                this.getView().getModel("LocalModel").setProperty("/Supplier", oval);
+                this.getView().getModel("LocalModel").refresh(true);
+            }
+            // var oval = evt.getParameter("selectedItem").getProperty("title");
+            // var sSelecteddesc = evt.getParameter("selectedItem").getProperty("description");
+            // this.getView().getModel("LocalModel").setProperty("/Supplier", oval);
+            // this.getView().getModel("LocalModel").refresh(true);
             evt.getSource().getBinding("items").filter([]);
         },
 
@@ -147,8 +158,14 @@ sap.ui.define([
                     this.getOwnerComponent().getModel().read(surl, {
                         success: function (oData) {
                             this.showBusy(false);
-                            this.getOwnerComponent().getModel(smodelname).setProperty("/results", oData.results);
-                            resolve(oData.results);
+                            if(oData.results === undefined){
+                                this.getOwnerComponent().getModel(smodelname).setProperty("/results", oData);
+                                resolve(oData);
+                            }else{
+                                    this.getOwnerComponent().getModel(smodelname).setProperty("/results", oData.results);
+                                    resolve(oData.results);
+                            }
+                            
                         }.bind(this),
                         error: function (oError) {
                             this.showBusy(false);
@@ -201,15 +218,37 @@ sap.ui.define([
         },
 
          onSearch: function (oEvent) {
-            if(this.getOwnerComponent().getModel("LocalModel").getData().Type === undefined || this.getOwnerComponent().getModel("LocalModel").getData().Type === ''){
+            var omodel = this.getOwnerComponent().getModel("LocalModel").getData();
+            var sname = '';
+            if(omodel.Type === 'D'){
+                sname = "Detailed View";
+            }
+            if(omodel.Type === 'S'){
+                sname = "Summary View";
+            }
+            if(omodel.Type === undefined || omodel.Type === ''){
                 MessageBox.error("Please select Type");
+            }else if(omodel.Ddate === undefined || omodel.Ddate === ''){
+                MessageBox.error("Please select Date");
+            }else if(omodel.Laufi === undefined || omodel.Laufi === ''){
+                MessageBox.error("Please select Run Identification");
             }else{
-               var sstring = this.buildFiltersForCustomFields();
-               debugger;
-               sstring = "/sap/opu/odata/sap/ZFI_PAYMENT_PROPOSAL_SRV/AttachmentSet(" + sstring + ")/$value"
-               this._pdfViewer.setSource(sstring);
-                this._pdfViewer.setTitle(this.getOwnerComponent().getModel("LocalModel").getData().Type);
-                this._pdfViewer.open();                
+               
+                var sstring1 = "Laufi='" + omodel.Laufi + "',Laufd='" + this.formatDate(omodel.Ddate) + "'";
+                var surlstring = "/ReguhSet(" + sstring1 + ")";
+                this.getOdata(surlstring, "test", null).then((res) => {
+                    if(res.message === true){
+                        var sstring = this.buildFiltersForCustomFields();
+                        sstring = "/sap/opu/odata/sap/ZFI_PAYMENT_PROPOSAL_SRV/AttachmentSet(" + sstring + ")/$value"
+                        this._pdfViewer.setSource(sstring);
+                        this._pdfViewer.setTitle(sname);
+                        this._pdfViewer.open();
+                    }else{
+                        MessageBox.error("No payment proposal data is available for the provided selection.")
+                    }
+                    
+                });
+                               
             }
         },
 
@@ -217,7 +256,7 @@ sap.ui.define([
             var oFilterBar = this.getView().byId("fbPreqs");
             var aFilters = [];
             var sstring = '';
-            var sSupplier = '',sBukrs ='',Ddate=null,RType='';
+            var sSupplier = '',sBukrs ='',Ddate=null,RType='',sLaufi='';
             oFilterBar.getFilterGroupItems().forEach(function (oItem) {
                 var oControl = oItem.getControl();
                 var sControlType = oControl.getMetadata().getName();
@@ -237,7 +276,14 @@ sap.ui.define([
                     case "sap.m.Input":
                         var sValue = oControl.getValue();
                         aFilters.push(new Filter(oItem.getName(), FilterOperator.EQ, sValue));
-                        sBukrs = sValue;
+                        if(oItem.getName() === 'Bukrs'){
+                            sBukrs = sValue;
+                        }
+                        if(oItem.getName() === 'Laufi')
+                        {
+                             sLaufi = sValue;
+                        }
+                       
                         break;
                     case "sap.m.ComboBox":
                         var sKey = oControl.getSelectedKey();
@@ -250,17 +296,19 @@ sap.ui.define([
                         var ovl = [];
                         var sfilterval = '';
                         if (oControl.getProperty("value") !== '') {
-                            var ovl = oControl.getProperty("value").split(",");
-                            for (var i = 0; i < ovl.length; i++) {
-                                if (oControl.mBindingInfos.value.parts[0].path.split("/")[1] === 'month') {
-                                    aFilters.push(new Filter("month", FilterOperator.BT, ovl[i].trim().split(" ")[0], ovl[i].trim().split(" ")[1]));
-                                    // aFilters.push(new Filter("year", FilterOperator.EQ, ovl[i].trim().split(" ")[1]));
-                                }
-                                else {
-                                    aFilters.push(new Filter(oControl.mBindingInfos.value.parts[0].path.split("/")[1], FilterOperator.EQ, ovl[i].trim()));
-                                }
+                            var ovl = oControl.getProperty("value");//.split(",");
+                            sSupplier = ovl;
+                            aFilters.push(new Filter(oControl.mBindingInfos.value.parts[0].path.split("/")[1], FilterOperator.EQ, ovl));
+                            // for (var i = 0; i < ovl.length; i++) {
+                            //     if (oControl.mBindingInfos.value.parts[0].path.split("/")[1] === 'month') {
+                            //         aFilters.push(new Filter("month", FilterOperator.BT, ovl[i].trim().split(" ")[0], ovl[i].trim().split(" ")[1]));
+                            //         // aFilters.push(new Filter("year", FilterOperator.EQ, ovl[i].trim().split(" ")[1]));
+                            //     }
+                            //     else {
+                            //         aFilters.push(new Filter(oControl.mBindingInfos.value.parts[0].path.split("/")[1], FilterOperator.EQ, ovl[i].trim()));
+                            //     }
 
-                            }
+                            // }
                         }
                         break;
 
@@ -282,7 +330,7 @@ sap.ui.define([
                             break;
                 }
             }.bind(this));
-            sstring = "Supplier='" + sSupplier + "',Bukrs='" + sBukrs + "',Ddate='" + Ddate + "',RType='" + RType+ "'";                 
+            sstring = "Supplier='" + sSupplier + "',Bukrs='" + sBukrs + "',Ddate='" + Ddate + "',Laufi='" + sLaufi + "',RType='" + RType+ "'";                 
             return sstring;
         },
          formatDate: function (dt) {

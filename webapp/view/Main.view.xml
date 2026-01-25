@@ -43,6 +43,12 @@
 </fb:control>
 </fb:FilterGroupItem>
 
+<fb:FilterGroupItem name="Laufi" label="Run Identification" groupName="default" visibleInFilterBar="true">
+    <fb:control>
+    <Input value="{LocalModel>/Laufi}"  maxLength="6"/>
+</fb:control>
+</fb:FilterGroupItem>
+
 <fb:FilterGroupItem name="RType" label="Type" groupName="default" visibleInFilterBar="true">
     <fb:control>
        <Select  forceSelection="false"
@@ -51,7 +57,7 @@
 							path: 'typedtls>/results',
                             templateShareable:false
 						}">
-					<core:Item key="{typedtls>value}" text="{typedtls>value}" />
+					<core:Item key="{typedtls>key}" text="{typedtls>value}" />
 				</Select>
 </fb:control>
 </fb:FilterGroupItem>

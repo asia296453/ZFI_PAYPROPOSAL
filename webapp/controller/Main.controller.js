@@ -233,7 +233,7 @@ sap.ui.define([
             }else if(omodel.Laufi === undefined || omodel.Laufi === ''){
                 MessageBox.error("Please select Run Identification");
             }else{
-               
+               omodel.Laufi = omodel.Laufi.toUpperCase();
                 var sstring1 = "Laufi='" + omodel.Laufi + "',Laufd='" + this.formatDate(omodel.Ddate) + "'";
                 var surlstring = "/ReguhSet(" + sstring1 + ")";
                 this.getOdata(surlstring, "test", null).then((res) => {
